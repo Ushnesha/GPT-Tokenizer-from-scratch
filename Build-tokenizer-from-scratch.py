@@ -60,10 +60,10 @@ class BytePairEncodingTokenizer:
             vocab_size: Target vocabulary size to build up to (default: 1000)
         """
         # Instance variables - vocabulary and mapping
-        self.target_vocab_size = vocab_size
-        self.vocab = set(i for i in range(256))  # initial vocab from UTF-8 bytes (0-255)
-        self.current_vocab_size = len(self.vocab)
+        self.target_vocab_size = vocab_size # initial vocab from UTF-8 bytes (0-255)
         self.decode_map = {}  # token -> (component1, component2) or token
+        self.vocab_bytes = {i: bytes([i]) for i in range(256)}
+        self.current_vocab_size = len(self.vocab_bytes)
 
     def _get_pairs(self, tokens: list) -> dict:
         """
@@ -101,25 +101,6 @@ class BytePairEncodingTokenizer:
                 i += 1
         return tokens
 
-    def _decompose_token(self, token: int) -> list:
-        """
-        Recursively decompose a token into its base UTF-8 bytes.
-
-        Args:
-            token: Token to decompose
-
-        Returns:
-            List of base byte tokens
-        """
-        if token < 256:
-            return [token]
-
-        dec_toks = self.decode_map[token]
-        result = []
-        result.extend(self._decompose_token(dec_toks[0]))
-        result.extend(self._decompose_token(dec_toks[1]))
-        return result
-
     def encode(self, text: str) -> list:
         """
         Encode text using BPE algorithm.
@@ -150,50 +131,22 @@ class BytePairEncodingTokenizer:
 
             # Update all data structures
             tokens = self._merge_pairs(tokens, pair, new_token)
-            self.vocab.add(new_token)
             self.decode_map[new_token] = pair
             self.current_vocab_size += 1
 
         return tokens
 
-    def decode(self, tokens: list) -> list:
-        """
-        Decode tokens back to UTF-8 bytes.
-
-        Args:
-            tokens: List of token integers
-
-        Returns:
-            List of byte integers
-        """
-        dec_tokens = []
-        for tok in tokens:
-            dec_tokens.extend(self._decompose_token(tok))
-        return dec_tokens
-
-    def decode_v2(self, tokens: list) -> list:
-        vocab_bytes = {i: bytes([i]) for i in range(256)}
+    def _update_vocab(self) -> None:
         for idx, (p0, p1) in self.decode_map.items():
-            vocab_bytes[idx] = vocab_bytes[p0] + vocab_bytes[p1]
+            self.vocab_bytes[idx] = self.vocab_bytes[p0] + self.vocab_bytes[p1]
+        
 
-        tokens = b"".join(vocab_bytes[tok] for tok in tokens)
+    def decode(self, tokens: list) -> str:
+        self._update_vocab()
+        tokens = b"".join(self.vocab_bytes[tok] for tok in tokens)
         text = tokens.decode('utf-8', errors='replace')
             
         return text
-        
-
-    def decode_to_text(self, tokens: list) -> str:
-        """
-        Decode tokens directly to text string.
-
-        Args:
-            tokens: List of token integers
-
-        Returns:
-            Decoded text string
-        """
-        byte_tokens = self.decode(tokens)
-        return bytes(byte_tokens).decode('utf-8')
 
 
 # Example usage
@@ -202,6 +155,7 @@ if __name__ == "__main__":
     test_text = "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe into the hearts of programmers worldwide. We all know we ought to “support Unicode” in our software (whatever that means—like using wchar_t for all the strings, right?). But Unicode can be abstruse, and diving into the thousand-page Unicode Standard plus its dozens of supplementary annexes, reports, and notes can be more than a little intimidating. I don’t blame programmers for still finding the whole thing mysterious, even 30 years after Unicode’s inception."
     tokens = test_text.encode("utf-8")
     tokens = list(map(int, tokens))
+    print("="*100)
     print(f"Original tokens: {tokens}")
     print(f"Length of original tokens: {len(tokens)}")
     vocab_size = 276
@@ -215,22 +169,13 @@ if __name__ == "__main__":
     print(f"Encoded tokens: {encoded_tokens}")
     print(f"Length of encoded tokens with vocab size {vocab_size}: {len(encoded_tokens)}")
 
-    # # Decode tokens
-    # decoded_tokens = tokenizer.decode(encoded_tokens)
-    # print("="*100)
-    # print(f"Decoded tokens: {decoded_tokens}")
-    # print(f"Length of decoded tokens: {len(decoded_tokens)}")
-
-    # # Convert back to text
-    # decoded_text = tokenizer.decode_to_text(encoded_tokens)
-    # print("="*100)
-    # print(f"Decoded text: {decoded_text}")
-    # print("="*100)
-    # print(f"Decoded text == original text: {decoded_text == test_text}")
-
     # Convert back to text
-    decoded_text = tokenizer.decode_v2(encoded_tokens)
+    decoded_text = tokenizer.decode(encoded_tokens)
     print("="*100)
     print(f"Decoded text: {decoded_text}")
     print("="*100)
     print(f"Decoded text == original text: {decoded_text == test_text}")
+
+
+    
+    
