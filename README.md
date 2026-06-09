@@ -61,12 +61,10 @@ This repository includes a beautiful, interactive web interface built with **Str
 Here is a visual overview of the playground:
 
 #### Screenshot
-![BPE Tokenizer Playground Screenshot Placeholder](./assets/bpe_tokenizer_screenshot.png)
-*(Screenshot placeholder: replace with actual screenshot showing the glassmorphic metric cards and colored token chip visualization)*
+![BPE Tokenizer Playground Screenshot](./assets/bpe_tokenizer_screenshot.png)
 
 #### Video Demo
-![BPE Tokenizer Playground Video Demo Placeholder](./assets/bpe_tokenizer_demo.mp4)
-*(Video demo placeholder: replace with a small recording showing real-time compression and vocab explorer interactions)*
+<video src="./assets/bpe_tokenizer_demo.mp4" controls width="100%"></video>
 
 ## Why Tokenization?
 
