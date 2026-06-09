@@ -63,7 +63,7 @@ class BytePairEncodingTokenizer:
         self.target_vocab_size = vocab_size
         self.vocab = set(i for i in range(256))  # initial vocab from UTF-8 bytes (0-255)
         self.current_vocab_size = len(self.vocab)
-        self.decode_map = {i: i for i in self.vocab}  # token -> (component1, component2) or token
+        self.decode_map = {}  # token -> (component1, component2) or token
 
     def _get_pairs(self, tokens: list) -> dict:
         """
@@ -111,7 +111,7 @@ class BytePairEncodingTokenizer:
         Returns:
             List of base byte tokens
         """
-        if self.decode_map[token] == token:
+        if token < 256:
             return [token]
 
         dec_toks = self.decode_map[token]
@@ -171,6 +171,17 @@ class BytePairEncodingTokenizer:
             dec_tokens.extend(self._decompose_token(tok))
         return dec_tokens
 
+    def decode_v2(self, tokens: list) -> list:
+        vocab_bytes = {i: bytes([i]) for i in range(256)}
+        for idx, (p0, p1) in self.decode_map.items():
+            vocab_bytes[idx] = vocab_bytes[p0] + vocab_bytes[p1]
+
+        tokens = b"".join(vocab_bytes[tok] for tok in tokens)
+        text = tokens.decode('utf-8', errors='replace')
+            
+        return text
+        
+
     def decode_to_text(self, tokens: list) -> str:
         """
         Decode tokens directly to text string.
@@ -203,15 +214,22 @@ if __name__ == "__main__":
     print("="*100)
     print(f"Encoded tokens: {encoded_tokens}")
     print(f"Length of encoded tokens with vocab size {vocab_size}: {len(encoded_tokens)}")
-    
-    # Decode tokens
-    decoded_tokens = tokenizer.decode(encoded_tokens)
-    print("="*100)
-    print(f"Decoded tokens: {decoded_tokens}")
-    print(f"Length of decoded tokens: {len(decoded_tokens)}")
+
+    # # Decode tokens
+    # decoded_tokens = tokenizer.decode(encoded_tokens)
+    # print("="*100)
+    # print(f"Decoded tokens: {decoded_tokens}")
+    # print(f"Length of decoded tokens: {len(decoded_tokens)}")
+
+    # # Convert back to text
+    # decoded_text = tokenizer.decode_to_text(encoded_tokens)
+    # print("="*100)
+    # print(f"Decoded text: {decoded_text}")
+    # print("="*100)
+    # print(f"Decoded text == original text: {decoded_text == test_text}")
 
     # Convert back to text
-    decoded_text = tokenizer.decode_to_text(encoded_tokens)
+    decoded_text = tokenizer.decode_v2(encoded_tokens)
     print("="*100)
     print(f"Decoded text: {decoded_text}")
     print("="*100)
