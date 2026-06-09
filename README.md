@@ -56,15 +56,8 @@ This repository includes a beautiful, interactive web interface built with **Str
    ```
 3. Open the app in your browser at `http://localhost:8501`.
 
-### Interface Preview & Demo
-
-Here is a visual overview of the playground:
-
-#### Screenshot
-![BPE Tokenizer Playground Screenshot](./assets/bpe_tokenizer_screenshot.png)
-
-#### Video Demo
-<video src="./assets/bpe_tokenizer_demo.mp4" controls width="100%"></video>
+### Interface Demo
+![BPE Tokenizer Playground Demo](./assets/bpe_tokenizer_demo.gif)
 
 ## Why Tokenization?
 
