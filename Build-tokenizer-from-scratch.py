@@ -64,7 +64,6 @@ class BytePairEncodingTokenizer:
         self.vocab = set(i for i in range(256))  # initial vocab from UTF-8 bytes (0-255)
         self.current_vocab_size = len(self.vocab)
         self.decode_map = {i: i for i in self.vocab}  # token -> (component1, component2) or token
-        self.encode_map = {i: i for i in self.vocab}  # (component1, component2) -> token
 
     def _get_pairs(self, tokens: list) -> dict:
         """
@@ -153,7 +152,6 @@ class BytePairEncodingTokenizer:
             tokens = self._merge_pairs(tokens, pair, new_token)
             self.vocab.add(new_token)
             self.decode_map[new_token] = pair
-            self.encode_map[pair] = new_token
             self.current_vocab_size += 1
 
         return tokens
@@ -218,39 +216,3 @@ if __name__ == "__main__":
     print(f"Decoded text: {decoded_text}")
     print("="*100)
     print(f"Decoded text == original text: {decoded_text == test_text}")
-
-# tokens = [1,1,1,2,4,1,1,1,2,1,3]
-# print(tokens)
-# vocab = set(i for i in range(5))
-# curr_vocab_size = len(vocab)
-# vocab_size = 8
-# decode_map = {i:i for i in vocab}  # mapping from token to original byte value for decoding
-# encode_map = {i:i for i in vocab}
-
-# while curr_vocab_size < vocab_size:
-#     paired_tokens = sorted(get_pairs(tokens).items(), key=lambda x: x[1], reverse=True)
-#     if not paired_tokens:
-#         break  # no more pairs to merge
-#     pair, freq = paired_tokens[0]
-#     new_token = curr_vocab_size
-#     tokens = merge_pairs(tokens, pair, new_token)
-#     vocab.add(new_token)
-#     decode_map[new_token] = pair
-#     encode_map[pair] = new_token
-    
-#     curr_vocab_size += 1
-# print(tokens)
-
-# def get_tokens(token, decode_map):
-#     if decode_map[token] == token:
-#         return [token]
-#     dec_toks = decode_map[token]
-#     lst = []
-#     lst.extend(get_tokens(dec_toks[0], decode_map))
-#     lst.extend(get_tokens(dec_toks[1], decode_map))
-#     return lst
-# dec_tokens = []
-# for tok in tokens:
-#     dec_tokens.extend(get_tokens(tok, decode_map))
-    
-# print(dec_tokens)
