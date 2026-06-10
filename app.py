@@ -164,7 +164,7 @@ html, body, [class*="css"], .stMarkdown, .stText, .stButton, .stTextArea {
 
 # --- Load the Tokenizer Class Dynamically (handling hyphenated module name) ---
 try:
-    spec = importlib.util.spec_from_file_location("tokenizer_module", "Build-tokenizer-from-scratch.py")
+    spec = importlib.util.spec_from_file_location("tokenizer_module", "Build-gpt2-tokenizer-from-scratch.py")
     tokenizer_module = importlib.util.module_from_spec(spec)
     sys.modules["tokenizer_module"] = tokenizer_module
     spec.loader.exec_module(tokenizer_module)
@@ -254,8 +254,8 @@ if submit_btn or 'initialized' not in st.session_state:
             encoded_tokens = tokenizer.encode(text_input)
             
             # 3. Decode
-            decoded_bytes = tokenizer.decode(encoded_tokens)
-            decoded_text = tokenizer.decode_to_text(encoded_tokens)
+            decoded_text = tokenizer.decode(encoded_tokens)
+            decoded_bytes = list(b"".join(tokenizer.vocab_bytes[tok] for tok in encoded_tokens))
             
             elapsed_time = time.time() - start_time
             
@@ -265,15 +265,16 @@ if submit_btn or 'initialized' not in st.session_state:
             st.session_state['decoded_text'] = decoded_text
             st.session_state['elapsed_time'] = elapsed_time
             st.session_state['vocab_size'] = tokenizer.current_vocab_size
+            st.session_state['vocab_bytes'] = tokenizer.vocab_bytes
             
             # Build vocabulary table
             learned_vocab = []
             for t in range(256, tokenizer.current_vocab_size):
                 if t in tokenizer.decode_map:
                     pair = tokenizer.decode_map[t]
-                    # Decompose this token into bytes, then convert to string
-                    raw_bytes = tokenizer.decode([t])
-                    char_repr = bytes(raw_bytes).decode('utf-8', errors='replace')
+                    # Get the raw bytes for this token
+                    token_bytes = tokenizer.vocab_bytes.get(t, b"")
+                    char_repr = token_bytes.decode('utf-8', errors='replace')
                     
                     # Highlight control/space characters for clarity
                     char_repr_escaped = char_repr.replace(" ", "␣").replace("\n", "↵")
@@ -281,7 +282,7 @@ if submit_btn or 'initialized' not in st.session_state:
                     learned_vocab.append({
                         "Token ID": t,
                         "Merged Pair": f"({pair[0]}, {pair[1]})",
-                        "Decompressed Bytes": str(raw_bytes),
+                        "Decompressed Bytes": str(list(token_bytes)),
                         "Text Representation": char_repr_escaped
                     })
             st.session_state['learned_vocab'] = learned_vocab
@@ -346,30 +347,10 @@ if 'encoded_tokens' in st.session_state:
         
         # Print list of tokens visually using custom hover chips
         chip_html = ""
+        vocab_bytes = st.session_state.get('vocab_bytes', {})
         for tok in encoded_tokens:
-            # Get representation
-            raw_bytes = tokenizer_module.BytePairEncodingTokenizer(vocab_size=vocab_size).decode([tok]) if tok < 256 else []
-            # We can use the current runner to decode the token for display
-            try:
-                # To avoid re-initialization overhead, we reconstruct or find from learned_vocab or direct decode
-                # Since we have decoded bytes, let's decode just this token
-                # Make a temp tokenizer with our learned state to retrieve the byte value
-                # We can write a quick helper to represent it:
-                temp_tok_bytes = bytes([tok]) if tok < 256 else bytes(decoded_bytes) # fallback
-                # Or just decode directly since we have the session state decoder maps
-                # Wait, tokenizer is not in session state, but we can reconstruct token text
-                # We will define a helper function inside app to get character representation of a token:
-                pass
-            except:
-                pass
-            
-            # Let's get character content for this token
-            if tok < 256:
-                char_str = bytes([tok]).decode('utf-8', errors='replace')
-            else:
-                # search in learned vocab
-                match = next((item for item in learned_vocab if item["Token ID"] == tok), None)
-                char_str = match["Text Representation"] if match else f"Tok{tok}"
+            token_bytes = vocab_bytes.get(tok, b"")
+            char_str = token_bytes.decode('utf-8', errors='replace')
             
             # Escape spaces for visible layout
             char_str_clean = char_str.replace(" ", "␣").replace("\n", "↵")
