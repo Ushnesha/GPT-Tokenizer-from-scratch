@@ -215,7 +215,7 @@ self.encode_map            # Maps (component1, component2) → token
 ### Basic Example
 
 ```python
-from Build_tokenizer_from_scratch import BytePairEncodingTokenizer
+from Build_gpt2_tokenizer_from_scratch import BytePairEncodingTokenizer
 
 # Initialize tokenizer with vocabulary size of 1000
 tokenizer = BytePairEncodingTokenizer(vocab_size=1000)
@@ -257,7 +257,7 @@ tokenizer_small = BytePairEncodingTokenizer(vocab_size=256)  # No compression
 ### Complete Example from Code
 
 ```python
-from Build_tokenizer_from_scratch import BytePairEncodingTokenizer
+from Build_gpt2_tokenizer_from_scratch import BytePairEncodingTokenizer
 
 test_text = "Unicode! The very name strikes fear and awe into the hearts of programmers worldwide."
 
@@ -348,7 +348,7 @@ BPE is completely **reversible**:
 
 ## Files
 
-- `Build-tokenizer-from-scratch.py` - Complete BPE tokenizer implementation
+- `Build-gpt2-tokenizer-from-scratch.py` - Complete BPE tokenizer implementation
 - `app.py` - Streamlit interactive web interface
 - `README.md` - This documentation file
 
